@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MS-DOS Fun Platform</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: white;
+            color: black;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            border: 2px solid pink;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid pink;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .content {
+            min-height: 300px;
+        }
+        .footer {
+            border-top: 2px solid pink;
+            padding-top: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .floating-controller {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: white;
+            border: 2px solid pink;
+            padding: 10px;
+        }
+        .ascii-art {
+            white-space: pre;
+            font-size: 12px;
+            line-height: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>MS-DOS Fun Platform</h1>
+        </div>
+        <div class="content" id="content">
+            <!-- Content will be dynamically inserted here -->
+        </div>
+        <div class="footer">
+            <p>© 2024 MS-DOS Fun Platform</p>
+        </div>
+    </div>
+    <div class="floating-controller">
+        <button onclick="showRegister()">Register</button>
+        <button onclick="showLogin()">Login</button>
+        <button onclick="createRiddle()">Create Riddle</button>
+        <button onclick="showCrossword()">Solve Crossword</button>
+        <button onclick="showLeaderboard()">Leaderboard</button>
+        <button onclick="logout()">Logout</button>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        function showRegister() {
+            $('#content').html(`
+                <h2>Register</h2>
+                <input type="text" id="reg-username" placeholder="Username">
+                <input type="text" id="reg-riddle" placeholder="Riddle">
+                <input type="password" id="reg-answer" placeholder="Answer">
+                <button onclick="register()">Register</button>
+            `);
+        }
+
+        function register() {
+            $.ajax({
+                url: '/register',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    username: $('#reg-username').val(),
+                    riddle: $('#reg-riddle').val(),
+                    answer: $('#reg-answer').val()
+                }),
+                success: function(response) {
+                    alert(response.message);
+                    showLogin();
+                }
+            });
+        }
+
+        function showLogin() {
+            $('#content').html(`
+                <h2>Login</h2>
+                <input type="text" id="login-username" placeholder="Username">
+                <div id="login-riddle"></div>
+                <input type="password" id="login-answer" placeholder="Answer">
+                <button onclick="login()">Login</button>
+            `);
+        }
+
+        function login() {
+            $.ajax({
+                url: '/login',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    username: $('#login-username').val(),
+                    answer: $('#login-answer').val()
+                }),
+                success: function(response) {
+                    alert(response.message);
+                    showCrossword();
+                }
+            });
+        }
+
+        function createRiddle() {
+            $('#content').html(`
+                <h2>Create Riddle</h2>
+                <input type="text" id="new-riddle" placeholder="Riddle">
+                <input type="text" id="new-answer" placeholder="Answer">
+                <button onclick="submitRiddle()">Submit Riddle</button>
+            `);
+        }
+
+        function submitRiddle() {
+            $.ajax({
+                url: '/create_riddle',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    riddle: $('#new-riddle').val(),
+                    answer: $('#new-answer').val()
+                }),
+                success: function(response) {
+                    alert(response.message);
+                    showCrossword();
+                }
+            });
+        }
+
+        function showCrossword() {
+            $.ajax({
+                url: '/get_crossword',
+                method: 'GET',
+                success: function(response) {
+                    let crosswordHtml = '<h2>Crossword</h2><div class="ascii-art">';
+                    response.crossword.forEach(line => {
+                        crosswordHtml += line + '<br>';
+                    });
+                    crosswordHtml += '</div><h3>Clues:</h3><ol>';
+                    response.clues.forEach(clue => {
+                        crosswordHtml += '<li>' + clue + '</li>';
+                    });
+                    crosswordHtml += '</ol>';
+                    $('#content').html(crosswordHtml);
+                }
+            });
+        }
+
+        function showLeaderboard() {
+            $.ajax({
+                url: '/leaderboard',
+                method: 'GET',
+                success: function(response) {
+                    let leaderboardHtml = '<h2>Leaderboard</h2><ol>';
+                    response.forEach(user => {
+                        leaderboardHtml += `<li>${user.username}: ${user.score} points</li>`;
+                    });
+                    leaderboardHtml += '</ol>';
+                    $('#content').html(leaderboardHtml);
+                }
+            });
+        }
+
+        function logout() {
+            $.ajax({
+                url: '/logout',
+                method: 'GET',
+                success: function(response) {
+                    alert(response.message);
+                    showLogin();
+                }
+            });
+        }
+
+        // Initialize with login screen
+        $(document).ready(function() {
+            showLogin();
+        });
+    </script>
+</body>
+</html>
